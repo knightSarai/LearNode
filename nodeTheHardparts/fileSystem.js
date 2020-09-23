@@ -1,3 +1,4 @@
+const fs = require('fs');
 //! All functions that sat to auto-run, don't share the same Queue.
 //! Any function envolve I/O wich trigger events do share the same Queue.
 //! the data that passed from the computer to node, will be transfered As buffer.
