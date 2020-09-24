@@ -5,9 +5,10 @@ let util = require('util');
 let path = require('path');
 let fs = require('fs');
 let Transform = require('stream').Transform;
+let zlib = require('zlib');
 // let getStdin = require('get-stdin');
 let args = require("minimist")(process.argv.slice(2), {
-    boolean: ["help", "in"],
+    boolean: ["help", "in", "compress", "uncompress"],
     string: ["file"]
 });
 /**********/
@@ -36,21 +37,29 @@ if (args.help){
 
 function processFile(inStream) {
     let outStream = inStream;
-    let UpperStream = new Transform({
+    let upperStream = new Transform({
         transform(chunck, enc, cb) {
             this.push(chunck.toString().toUpperCase());
             cb();  //next()
         }
     })
-    outStream = inStream.pipe(UpperStream);
+    outStream = outStream.pipe(upperStream);
+    if(args.uncompress) {
+        let gunzipStream = zlib.createGunzip();
+        outStream = outStream.pipe(gunzipStream);
+        
+    }
+
+    if (args.compress) {
+        let gzipStream = zlib.createGzip();
+        outStream = outStream.pipe(gzipStream)
+        OUTFILE = `${OUTFILE}.gz`
+    }
+ 
     let targetStream = args.out ? process.stdout : fs.createWriteStream(OUTFILE);
     outStream.pipe(targetStream);
 }
 
-function onContent(err, contents) {
-    err && error(err.toString());
-    !err &&processFile(contents)
-}
 
 function error(msg, includeHelp = false){
     console.error(msg);
@@ -58,13 +67,14 @@ function error(msg, includeHelp = false){
 }
 
 function printHelp() {
-    console.log("zlib usage:");
-    console.log("zlibjs --file={FILENAME}");
+    console.log("app usage:");
+    console.log("app.js --file={FILENAME}");
     console.log("");
     console.log("--help              print this help");
     console.log("--file={FILENAME}              process the file");
     console.log(" --in, -                                  Process stdin");
     console.log(" --out, -                                Print to stdout");
+    console.log(" --compress, -                                gzip the output");
+    console.log(" --uncompress, -                                unzip the output");
     console.log("");
 }
-// process.stdout.write("Hello World");
