@@ -1,7 +1,12 @@
 #! /usr/bin/env node
 
 "use strict";
-let util = require('util');
+/*
+The point is that we're able to stop an asynchronous operation like a streaming operation
+right in the middle of it.
+instead of continuing to consume system resources 
+unnecessarily
+*/
 let path = require('path');
 let fs = require('fs');
 let Transform = require('stream').Transform;
@@ -9,6 +14,8 @@ let args = require("minimist")(process.argv.slice(2), {
     boolean: ["help", "in"],
     string: ["file"]
 });
+let CAF = require('caf');
+processFile = CAF(processFile)
 /**********/
 let BASE_PATH =  path.resolve(
     process.env.BASE_PATH || __dirname
@@ -23,19 +30,21 @@ if (args.help){
     args.in || 
     args._.includes("-")
 ){
-    processFile(process.stdin)
+    let tooLong = CAF.timeout(30, "\nTook to long!");
+    processFile(tooLong, process.stdin)
         .catch(error)
 
 } else if (args.file) {
     let stream = fs.createReadStream(path.join(BASE_PATH, args.file));
-    processFile(stream)
+    let tooLong = CAF.timeout(30, "\nTook to long!");
+    processFile(tooLong, stream)
         .then(()=> {console.log("\nFinish")})
         .catch(error);
 } else {
     error("you must provide a value", true)
 }
 
-async function processFile(inStream) {
+function *processFile(signal, inStream) {
     let outStream = inStream;
     let UpperStream = new Transform({
         transform(chunck, enc, cb) {
@@ -46,8 +55,14 @@ async function processFile(inStream) {
     outStream = inStream.pipe(UpperStream);
     let targetStream = args.out ? process.stdout : fs.createWriteStream(OUTFILE);
     outStream.pipe(targetStream);
+    //! signal  comes in with a promise on it 
+    //- that is going to be rejected whenever whenever the cancellation is fired
+    signal.pr.catch(function f() {
+        outStream.unpipe(targetStream);
+        outStream.destroy();
+    });
     // to determine the end of stream
-    await streamComplete(outStream); // will return a Promise
+    yield streamComplete(outStream); // will return a Promise
 }
 
 function streamComplete(stream) {
