@@ -7,6 +7,7 @@ var path = require("path");
 var fs = require("fs");
 
 var sqlite3 = require("sqlite3");
+const { table } = require("console");
 // require("console.table");
 
 // ************************************
@@ -57,9 +58,87 @@ async function main() {
 
 	// ***********
 
-	// TODO: insert values and print all records
-
+	// insert values and print all records
+	let otherID = await insertOrLookupOther(other);
+	if (otherID) {
+		let result = await insertSomthing(otherID, something);
+		if (result) {
+			let records = await getAllRecords();
+			if (records && records.length > 0) {
+				console.log("k");
+				console.table(records)
+			}
+		}
+	}
 	error("Oops!");
+}
+
+async function getAllRecords() {
+	// it will give us array of record
+	let result = await SQL3.all(
+		`
+			SELECT
+				Other.data AS 'other',
+				Something.data AS 'something'
+			FROM
+				Something JOIN Other
+				ON (Something.otherID = Other.id)
+			ORDER BY
+				Other.id DESC, Something.data ASC
+
+		`
+	);
+	if (result && result.length > 0) {
+		return result;
+	}
+}
+
+async function insertOrLookupOther(other) {
+	let result = await SQL3.get(
+		`
+			SELECT
+					id
+			FROM
+					Other
+			WHERE
+					data = ?	
+		`, 
+		other
+	)
+	
+	if (result && result.id) {
+		return result.id;
+	} else {
+		result = await SQL3.run(
+			`
+				INSERT INTO
+							Other (data)
+				VALUES
+						(?)
+			`,
+			other
+		);
+		if (result && result.lastID) {
+			return result.lastID;
+		}
+	}
+}
+
+async function insertSomthing(otherID, something) {
+	var result = await SQL3.run(
+		`
+			INSERT INTO
+						Something (otherID,data)
+			VALUES
+					(?,?)
+		`,
+		otherID,
+		something
+	)
+	if (result && result.changes > 0) {
+		return true;
+	}
+	return false;
 }
 
 function error(err) {
