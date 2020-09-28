@@ -74,8 +74,19 @@ function main() {
 	console.log(`Listening on http://localhost:${HTTP_PORT}...`);
 }
 
-function handleRequest(req, res) {
-    fileServer.serve(req, res);
+async function handleRequest(req, res) {
+	if (req.url === '/get-records') {
+		await delay(1000);
+		let records = await getAllRecords();
+		res.writeHead(200, {
+			"Content-Type": "application/json",
+			"Cashe-Control": "no-cache"
+		});
+		res.end(JSON.stringify(records));
+	} else {
+		fileServer.serve(req, res);
+	}
+   
 }
 // *************************
 // NOTE: if sqlite3 is not working for you,

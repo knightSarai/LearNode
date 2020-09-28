@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.20.0",
     "caf": "^9.1.0",
     "get-stdin": "^8.0.0",
     "minimist": "^1.2.5",
