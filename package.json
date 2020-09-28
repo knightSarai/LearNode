@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon diggingIntoNode/server.js --open"
+    "start": "nodemon diggingIntoNode/child-process/app.js --open"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +14,7 @@
     "caf": "^9.1.0",
     "get-stdin": "^8.0.0",
     "minimist": "^1.2.5",
+    "node-fetch": "^2.6.1",
     "node-static-alias": "^1.1.2",
     "nodemon": "^2.0.4",
     "sqlite3": "^5.0.0"
