@@ -35,14 +35,34 @@ let SQL3 = {
 	exec: util.promisify(myDB.exec.bind(myDB)),
 };
 
-// let fileServer = new staticAlias.Server(WEB_PATH,{
-// 	cache: 100,
-// 	serverInfo: "Node Workshop: ex5",
-// 	alias: [
-// 	],
-// });
+let fileServer = new staticAlias.Server(WEB_PATH,{
+	cache: 100,
+	serverInfo: "Node Workshop: ex5",
+	alias: [
+        {
+			match: /^\/(?:index\/?)?(?:[?#].*$)?$/,
+			serve: "index.html",
+			force: true,
+		},
+		{
+			match: /^\/js\/.+$/,
+			serve: "<% absPath %>",
+			force: true,
+		},
+		{
+			match: /^\/(?:[\w\d]+)(?:[\/?#].*$)?$/,
+			serve: function onMatch(params) {
+				return `${params.basename}.html`;
+			},
+		},
+		{
+			match: /[^]/,
+			serve: "404.html",
+		},
+	],
+});
 
-// let httpserv = http.createServer(handleRequest);
+let httpserv = http.createServer(handleRequest);
 
 main();
 
@@ -50,9 +70,13 @@ main();
 // ************************************
 
 function main() {
-	// console.log(`Listening on http://localhost:${HTTP_PORT}...`);
+    httpserv.listen(HTTP_PORT)
+	console.log(`Listening on http://localhost:${HTTP_PORT}...`);
 }
 
+function handleRequest(req, res) {
+    fileServer.serve(req, res);
+}
 // *************************
 // NOTE: if sqlite3 is not working for you,
 //   comment this version out

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon app.js --open"
+    "start": "nodemon diggingIntoNode/server.js --open"
   },
   "keywords": [],
   "author": "",
